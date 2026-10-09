@@ -1,0 +1,43 @@
+# Deploy manual (workflow_dispatch) — docs/09 §5 & §8.
+# Secrets yang perlu diisi di GitHub: SSH_HOST, SSH_USER, SSH_PRIVATE_KEY.
+# Auto-on-main menyusul setelah minimal 3× deploy manual sukses.
+name: Deploy (manual)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy ke VPS
+    runs-on: ubuntu-latest
+    steps:
+      - name: Siapkan SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts
+
+      - name: Deploy (urutan docs/09 §5)
+        env:
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+        run: |
+          ssh "$SSH_USER@$SSH_HOST" 'bash -s' <<'REMOTE'
+          set -euo pipefail
+          cd /opt/pmr-system
+          git pull origin main
+          docker compose -f docker-compose.prod.yml build app
+          docker compose -f docker-compose.prod.yml up -d
+          docker compose -f docker-compose.prod.yml exec -T app composer install --no-dev --optimize-autoloader
+          docker compose -f docker-compose.prod.yml exec -T app php artisan migrate --force
+          docker compose -f docker-compose.prod.yml exec -T app php artisan config:cache
+          docker compose -f docker-compose.prod.yml exec -T app php artisan route:cache
+          docker compose -f docker-compose.prod.yml exec -T app php artisan view:cache
+          docker compose -f docker-compose.prod.yml exec -T app php artisan storage:link
+          docker compose -f docker-compose.prod.yml exec -T app sh -c "npm install && npm run build"
+          docker compose -f docker-compose.prod.yml restart nginx
+          REMOTE

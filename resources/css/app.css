@@ -1,0 +1,22 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+
+@theme {
+    --font-sans: 'Plus Jakarta Sans', 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
+        'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+
+    /* Merah khas PMI/PMR — docs/06. Skala diselaraskan di sekitar #E31837. */
+    --color-brand-50: #fdf2f4;
+    --color-brand-100: #fbe5e9;
+    --color-brand-200: #f7c2cc;
+    --color-brand-300: #f192a4;
+    --color-brand-400: #e85d78;
+    --color-brand-500: #ec3a54;
+    --color-brand-600: #e31837;
+    --color-brand-700: #c11230;
+    --color-brand-800: #9a0e27;
+    --color-brand-900: #7e0c22;
+    --color-brand-950: #4a0613;
+}
