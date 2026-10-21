@@ -151,6 +151,30 @@ class EventShow extends Component
         $this->attendanceStatus = 'hadir';
     }
 
+    public function quickAttendance(int $memberId, string $status, RecordAttendance $recordAttendance): void
+    {
+        $event = Event::findOrFail($this->eventId);
+        $this->authorize('manage', AttendanceRecord::class);
+
+        $validatedStatus = AttendanceStatus::tryFrom($status);
+        if (! $validatedStatus) {
+            session()->flash('error', 'Status absensi tidak valid.');
+
+            return;
+        }
+
+        $member = Member::findOrFail($memberId);
+
+        $recordAttendance->execute($event, $member, [
+            'status' => $validatedStatus->value,
+            'notes' => null,
+            'method' => 'manual',
+            'checked_in_by' => auth()->id(),
+        ]);
+
+        session()->flash('success', "Absensi {$member->full_name} ({$validatedStatus->value}) berhasil disimpan.");
+    }
+
     public function uploadDocument(\App\Actions\Events\UploadEventDocument $uploader)
     {
         $event = Event::findOrFail($this->eventId);
@@ -179,16 +203,23 @@ class EventShow extends Component
     {
         $event = Event::withCount('participants')->findOrFail($this->eventId);
 
-        $participants = EventParticipant::with(['member:id,full_name,slug', 'member.schoolClass:id,name'])
+        $participants = EventParticipant::with(['member:id,full_name,slug,class_id', 'member.schoolClass:id,name'])
             ->where('event_id', $event->id)
             ->paginate(10);
 
-        $attendance = AttendanceRecord::with('member:id,full_name')
+        $attendance = AttendanceRecord::with(['member:id,full_name,class_id', 'member.schoolClass:id,name'])
             ->where('event_id', $event->id)
+            ->latest()
             ->paginate(10, ['*'], 'attendancePage');
 
+        $attendanceByMember = AttendanceRecord::where('event_id', $event->id)
+            ->get()
+            ->keyBy('member_id');
+
         $members = Member::query()
-            ->select(['id', 'full_name'])
+            ->with('schoolClass:id,name')
+            ->select(['id', 'full_name', 'class_id'])
+            ->where('status', 'aktif')
             ->orderBy('full_name')
             ->get();
 
@@ -203,6 +234,7 @@ class EventShow extends Component
             'event' => $event,
             'participants' => $participants,
             'attendance' => $attendance,
+            'attendanceByMember' => $attendanceByMember,
             'members' => $members,
             'attendanceStatuses' => AttendanceStatus::cases(),
             'participantMemberIds' => $participantMemberIds,

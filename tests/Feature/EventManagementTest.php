@@ -213,6 +213,26 @@ class EventManagementTest extends TestCase
             ->first()->status->value);
     }
 
+    public function test_pengurus_dapat_quick_attendance(): void
+    {
+        $pengurus = $this->pengurus();
+        $event = Event::factory()->create(['created_by' => $pengurus->id]);
+        $member = Member::factory()->create();
+
+        Livewire::actingAs($pengurus)
+            ->test(EventShow::class, ['event' => $event])
+            ->call('quickAttendance', $member->id, 'hadir')
+            ->assertHasNoErrors();
+
+        $this->assertDatabaseHas('attendance_records', [
+            'event_id' => $event->id,
+            'member_id' => $member->id,
+            'status' => 'hadir',
+            'method' => 'manual',
+            'checked_in_by' => $pengurus->id,
+        ]);
+    }
+
     public function test_hapus_kegiatan_hanya_admin_atau_pembuat(): void
     {
         $otherPengurus = $this->pengurus();
