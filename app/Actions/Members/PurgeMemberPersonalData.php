@@ -19,7 +19,13 @@ class PurgeMemberPersonalData
 {
     public function execute(Member $member): Member
     {
-        $old = Arr::except($member->getAttributes(), ['notes']);
+        $old = Arr::only($member->getAttributes(), [
+            'status',
+            'batch_id',
+            'class_id',
+            'position_id',
+            'joined_at',
+        ]);
 
         if ($member->photo_path) {
             Storage::disk('public')->delete($member->photo_path);

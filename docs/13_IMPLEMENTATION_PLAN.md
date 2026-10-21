@@ -19,7 +19,7 @@
 | 4 — Content (Publik) | ✅ Test hijau | 156/156 total |
 | 5 — Akademi | ✅ Selesai | 189/189 test |
 | 6 — Reporting | ✅ Selesai | 27/27 |
-| 7 — Advanced | 🟡 Kode selesai, 235/235 hijau (sisa aksi user: uji PWA, cron backup, secrets GitHub, checklist rilis) | 22/39 |
+| 7 — Advanced | 🟡 Kode selesai, 244/244 hijau (sisa aksi user: uji PWA, cron backup, secrets GitHub, checklist rilis) | 22/39 |
 
 > Update kolom Status: ⬜ belum · 🟡 berjalan · ✅ selesai.
 > Update kolom Task: `n/total` setiap kali ada perubahan centang.
@@ -436,7 +436,7 @@
 # FASE 7 — Advanced (setelah stabil)
 **Goal:** PWA, alumni, notifikasi, CI/CD, backup otomatis, hardening.
 **Referensi:** `docs/07` §6, `docs/08`, `docs/09` §8
-**Status:** 🟡 Kode selesai — **235/235 test hijau (912 assertions)**; sisa item = aksi user (uji install PWA, cron VPS, uji restore, secrets GitHub, checklist rilis, push pertama)
+**Status:** 🟡 Kode selesai — **244/244 test hijau (955 assertions)**; sisa item = aksi user (uji install PWA, cron VPS, uji restore, secrets GitHub, checklist rilis, push pertama)
 **Keputusan user:** semua item **kecuali REST API+Sanctum**; **2FA admin tidak** (untuk saat ini); urutan **infra dulu → fitur**.
 
 ### 7.1 PWA
@@ -487,7 +487,7 @@
 - [x] Retensi log (14 hari) aktif — `.env.example` → `LOG_CHANNEL=daily`, `LOG_DAILY_DAYS=14` (**ingat**: sinkronkan `.env` mesin yang sudah ada)
 
 ### 7.8 Selesai Fase
-- [x] Full test suite hijau — **235/235 (912 assertions)** ✅ 2026-09-24
+- [x] Full test suite hijau — **244/244 (955 assertions)** ✅ 2026-10-21 (termasuk uji tanpa `public/build`, agar CI tidak bergantung aset hasil build)
 - [ ] Semua checklist `docs/09` §10 VPS baru terpenuhi (bila pindah server)
 
 ## ✅ Definition of Done — Fase 7
@@ -495,7 +495,7 @@
 - [ ] CI/CD hijau di setiap push (**menunggu push pertama ke GitHub**)
 - [ ] Backup otomatis jalan + restore pernah diuji sukses (**aksi user: cron VPS + uji restore**)
 - [ ] Checklist keamanan rilis lengkap (**aksi user: docs/08 §8**)
-- [x] Semua test hijau — **235/235 (912 assertions)** ✅ 2026-09-24
+- [x] Semua test hijau — **244/244 (955 assertions)** ✅ 2026-10-21
 
 ---
 

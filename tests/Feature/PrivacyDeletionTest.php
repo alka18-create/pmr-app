@@ -49,6 +49,19 @@ class PrivacyDeletionTest extends TestCase
         ]);
         $oldNisn = $member->nisn;
         $oldEmail = $akun->email;
+        $oldName = $member->full_name;
+        $oldPersonalData = [
+            $oldName,
+            $oldNisn,
+            $member->nis,
+            $member->phone,
+            $member->address,
+            $member->email_pribadi,
+            $member->parent_name,
+            $member->parent_phone,
+            $member->birth_place,
+            $member->birth_date?->toDateString(),
+        ];
 
         Livewire::actingAs($pengurus)
             ->test(MemberShow::class, ['member' => $member])
@@ -91,7 +104,11 @@ class PrivacyDeletionTest extends TestCase
             'model_id' => $member->id,
         ]);
         $log = AuditLog::where('model_id', $member->id)->first();
-        $this->assertStringNotContainsString($oldNisn, json_encode($log->old_values));
+        $logPayload = json_encode([$log->old_values, $log->new_values]);
+
+        foreach ($oldPersonalData as $value) {
+            $this->assertStringNotContainsString((string) $value, $logPayload);
+        }
     }
 
     public function test_anggota_biasa_ditolak_menghapus_data_pribadi(): void

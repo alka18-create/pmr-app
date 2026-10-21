@@ -107,7 +107,7 @@ Prinsip: **selesaikan satu fase sampai stabil (test hijau, jalan manual) sebelum
 | 4 | Semua halaman publik live & SEO terpasang |
 | 5 | Satu siklus quiz → sertifikat → verifikasi berhasil |
 | 6 | Laporan PDF/Excel dihasilkan benar |
-| 7 | Deploy otomatis & backup teruji restore — **kode siap (235/235 hijau); eksekusi VPS menunggu aksi user** |
+| 7 | Deploy otomatis & backup teruji restore — **kode siap (244/244 hijau); eksekusi VPS menunggu aksi user** |
 
 ## Aturan Perubahan Roadmap
 - Penambahan fitur di luar daftar → masukkan ke fase terkait atau buat fase baru, **update dokumen ini dulu**, baru kode.
