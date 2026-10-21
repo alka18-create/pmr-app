@@ -9,6 +9,7 @@ use App\Http\Requests\UserRequest;
 use App\Models\User;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 
 #[Layout('components.layouts.panel')]
@@ -16,6 +17,7 @@ class UserEdit extends Component
 {
     use AuthorizesRequests;
 
+    #[Locked]
     public User $user;
 
     public string $name = '';

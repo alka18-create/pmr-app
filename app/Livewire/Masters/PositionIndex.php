@@ -6,6 +6,7 @@ use App\Actions\Masters\SavePosition;
 use App\Models\Position;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 
 #[Layout('components.layouts.panel')]
@@ -19,6 +20,7 @@ class PositionIndex extends Component
 
     public $level = 5;
 
+    #[Locked]
     public ?int $editId = null;
 
     public function mount(): void
@@ -61,7 +63,7 @@ class PositionIndex extends Component
         return redirect()->route('admin.master.positions');
     }
 
-    public function delete(Position $position)
+    public function delete(Position $position, \App\Actions\Masters\DeletePosition $deletePosition)
     {
         $this->authorize('manage-master');
 
@@ -71,7 +73,7 @@ class PositionIndex extends Component
             return redirect()->route('admin.master.positions');
         }
 
-        $position->delete();
+        $deletePosition->execute($position);
 
         session()->flash('success', sprintf('Jabatan %s dihapus.', $position->name));
 

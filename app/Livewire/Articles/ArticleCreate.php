@@ -71,12 +71,7 @@ class ArticleCreate extends Component
             'meta_title' => $validated['meta_title'] ?? null,
             'meta_description' => $validated['meta_description'] ?? null,
             'author_id' => auth()->id(),
-        ]);
-
-        if ($this->cover) {
-            $path = $this->cover->store('articles/'.$article->id, 'public');
-            $article->update(['cover_path' => $path]);
-        }
+        ], $this->cover instanceof \Illuminate\Http\UploadedFile ? $this->cover : null);
 
         session()->flash('success', 'Artikel berhasil dibuat.');
 

@@ -5,6 +5,7 @@ namespace App\Livewire\Website;
 use App\Models\Certificate;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 
 #[Layout('components.layouts.public', ['title' => 'Verifikasi Sertifikat'])]
@@ -14,8 +15,10 @@ class CertificateVerify extends Component
 
     public string $code = '';
 
+    #[Locked]
     public ?Certificate $certificate = null;
 
+    #[Locked]
     public bool $searched = false;
 
     public function mount(string $code = ''): void

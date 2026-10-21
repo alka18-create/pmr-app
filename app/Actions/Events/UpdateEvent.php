@@ -10,8 +10,15 @@ use App\Services\Notifier;
 
 class UpdateEvent
 {
-    public function execute(Event $event, array $data): Event
+    public function execute(Event $event, array $data, ?\Illuminate\Http\UploadedFile $cover = null): Event
     {
+        if ($cover) {
+            if ($event->cover_path) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($event->cover_path);
+            }
+            $data['cover_path'] = $cover->store('events/'.$event->id, 'public');
+        }
+
         $old = $event->getAttributes();
         $event->update($data);
 

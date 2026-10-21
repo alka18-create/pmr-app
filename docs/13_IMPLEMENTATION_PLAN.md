@@ -58,7 +58,7 @@
 - [x] Route `GET|POST /login`, `POST /logout` di grup terpisah `routes/auth.php` (`docs/07` §2) + placeholder `GET /panel`
 - [x] Rate limit login per email+IP: 5 gagal → lock 15 menit (`App\Actions\Auth\AttemptLogin`, `docs/08` §2.1)
 - [x] Session config: `http_only` + `same_site=lax` (config bawaan), driver `redis`, `SESSION_SECURE_COOKIE=false` dev / `true` prod; redirect `guest`→`/panel`, `authed`→`/login` di `bootstrap/app.php`
-- [ ] Halaman "lupa-password" + reset token (bisa tahap akhir fase)
+- [x] Halaman "lupa-password" + reset token (`ForgotPassword`, `ResetPassword`, `SendPasswordResetLink`, `ResetPasswordWithToken`, `PasswordResetTest` — 7 tests hijau)
 - [x] Test: `AuthTest` — 12/12 hijau (38 assertions); 1 fix: `session()->regenerate()` via helper agar jalan di konteks `Livewire::test`
 
 ### 1.4 Role & Otorisasi Dasar
@@ -495,7 +495,28 @@
 - [ ] CI/CD hijau di setiap push (**menunggu push pertama ke GitHub**)
 - [ ] Backup otomatis jalan + restore pernah diuji sukses (**aksi user: cron VPS + uji restore**)
 - [ ] Checklist keamanan rilis lengkap (**aksi user: docs/08 §8**)
-- [x] Semua test hijau — **244/244 (955 assertions)** ✅ 2026-10-21
+- [x] Semua test hijau — **254/254 (1073 assertions)** ✅ 2026-10-21 (setelah audit keamanan, audit log, & isolasi storage upload sensitif)
+
+---
+
+## Catatan Audit Kepatuhan (2026-10-21)
+
+**Sudah diperbaiki:**
+- [x] `ExportMembers` membuang response `Excel::download()` → file tidak terkirim; kini di-`return` + test `assertFileDownloaded`.
+- [x] Check-in QR: GET read-only (konfirmasi) + POST mencatat; limit 30/menit/IP (docs/07 §4.1).
+- [x] `scripts/backup-db.sh`: `umask 077` + `chmod 700` folder backup.
+- [x] `ProgramIndex`: tulis lewat Action `SaveProgram`/`DeleteProgram` (+ audit log).
+- [x] Global throttle publik `throttle:public` 60/menit/IP + `real_ip` Cloudflare di Nginx (tanpa ini semua rate limit per IP memakai IP edge Cloudflare). `PublicThrottleTest`.
+- [x] Kelengkapan audit log (docs/08 §6): logout dicatat, CRUD master data (Batch, Class, Position) melalui Actions terdedikasi (`SaveBatch/DeleteBatch`, dst.), CRUD Setting (`SaveSetting/DeleteSetting`), profil organisasi (`SaveOrganizationProfile`), regenerate sertifikat, dan indikator perubahan password (`password_changed`).
+- [x] Isolasi upload sensitif di luar `public/` (docs/08 §2.3): materi pelatihan PDF, sertifikat PDF, dan lampiran prestasi dipindahkan ke disk `local` (`storage/app/private/`), dilindungi dari akses publik langsung, dan hanya dapat diunduh melalui endpoint berotorisasi (`materials.download`, `achievements.download`, `CertificateIndex`, `MyCertificates`). `SensitiveUploadStorageTest`.
+- [x] Redirect HTTPS di Nginx (docs/08 §2.4): pengecekan `$http_x_forwarded_proto = "http"` di `docker/nginx/default.conf` dengan return 301 ke HTTPS untuk pengunjung di balik Cloudflare/reverse proxy, tanpa memutus akses local dev dan healthcheck Docker.
+- [x] Properti identitas dan state internal komponen Livewire (`editId`, `openId`, `member`, `user`, `showInternal`, `certificate`, `logoPath`, `submitted`, `finalScore`, `passed`) dikunci dengan atribut `#[Locked]` (docs/08 §2.2 & docs/05 §6). `LivewireLockedPropertiesTest` (12 tests).
+- [x] Route `/panel/profil` (Livewire `ProfileIndex`, Action `UpdateProfile`, `UpdatePassword`), `/lupa-password` (`ForgotPassword`), `/reset-password/{token}` (`ResetPassword`) (docs/07 §2–3, docs/08 §2.1). `ProfileTest` (8 tests) & `PasswordResetTest` (7 tests).
+- [x] Sinkronisasi dokumentasi otorisasi (docs/03 §2): diperbarui merefleksikan pilihan teknis `UserRole` enum + Gate/Policy bawaan Laravel yang efisien dan zero-dependency untuk 1 sekolah di V1, sekaligus menjaga kompatibilitas bila di masa depan di-upgrade ke Spatie Permission.
+- [x] Enkapsulasi penulisan data ke Action terdedikasi (docs/03 §4 aturan 2): `SubmitContactMessage`, `SetMessageStatus`, `SaveGalleryCategory`, `DeleteGalleryCategory`, `AddEventParticipant`, `RemoveEventParticipant`, `UploadEventDocument`, `DeleteEventDocument`, serta penanganan upload berkas cover/attachment di `CreateEvent`, `UpdateEvent`, `CreateArticle`, `UpdateArticle`, `CreateAchievement`, `UpdateAchievement`.
+
+**Gap terbuka (belum dikerjakan, butuh keputusan/approval):**
+- [ ] Validasi inline (`$this->validate`) di ~20 komponen Livewire, bukan FormRequest (docs/03 §4 aturan 4).
 
 ---
 

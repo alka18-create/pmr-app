@@ -9,6 +9,7 @@ use App\Enums\AchievementCategory;
 use App\Enums\AchievementLevel;
 use App\Models\Achievement;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Locked;
@@ -98,18 +99,14 @@ class AchievementIndex extends Component
             'is_public' => (bool) ($validated['is_public'] ?? $this->is_public),
         ];
 
+        $attachment = $this->attachment instanceof \Illuminate\Http\UploadedFile ? $this->attachment : null;
+
         if ($achievement) {
-            (new UpdateAchievement)->execute($achievement, $data);
-            $saved = $achievement;
+            (new UpdateAchievement)->execute($achievement, $data, $attachment);
             session()->flash('success', 'Prestasi diperbarui.');
         } else {
-            $saved = (new CreateAchievement)->execute($data);
+            (new CreateAchievement)->execute($data, $attachment);
             session()->flash('success', 'Prestasi berhasil ditambahkan.');
-        }
-
-        if ($this->attachment) {
-            $path = $this->attachment->store('achievements/'.$saved->id, 'public');
-            $saved->update(['attachment_path' => $path]);
         }
 
         $this->cancelEdit();

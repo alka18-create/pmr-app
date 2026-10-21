@@ -45,7 +45,7 @@ class GenerateCertificate implements ShouldQueue
         ])->setPaper('a4', 'landscape');
 
         $path = 'certificates/'.$certificate->code.'.pdf';
-        Storage::disk('public')->put($path, $pdf->output());
+        Storage::disk('local')->put($path, $pdf->output());
 
         $certificate->update(['file_path' => $path]);
     }

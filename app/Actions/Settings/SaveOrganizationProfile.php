@@ -46,5 +46,12 @@ class SaveOrganizationProfile
         if (array_key_exists('logo_path', $data)) {
             Setting::set('org_logo', $data['logo_path'], 'general');
         }
+
+        app(\App\Services\AuditLogger::class)->log(
+            'updated',
+            null,
+            [],
+            ['profile' => 'organization_profile', 'fields' => array_keys($data)],
+        );
     }
 }

@@ -87,12 +87,7 @@ class ArticleEdit extends Component
             'is_public' => (bool) ($validated['is_public'] ?? $this->is_public),
             'meta_title' => $validated['meta_title'] ?? null,
             'meta_description' => $validated['meta_description'] ?? null,
-        ]);
-
-        if ($this->cover) {
-            $path = $this->cover->store('articles/'.$article->id, 'public');
-            $article->update(['cover_path' => $path]);
-        }
+        ], $this->cover instanceof \Illuminate\Http\UploadedFile ? $this->cover : null);
 
         session()->flash('success', 'Artikel berhasil diperbarui.');
 

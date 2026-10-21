@@ -20,7 +20,10 @@ use App\Policies\EventPolicy;
 use App\Policies\GalleryItemPolicy;
 use App\Policies\MaterialPolicy;
 use App\Policies\QuizPolicy;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -54,5 +57,8 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('access-pengurus-area', fn (User $user) => $user->role === UserRole::Pengurus);
         Gate::define('access-admin-area', fn (User $user) => $user->role === UserRole::Admin);
         Gate::define('manage-master', fn (User $user) => $user->role === UserRole::Admin);
+
+        // Throttle global route publik — docs/08 §2.6 (60 request/menit/IP).
+        RateLimiter::for('public', fn (Request $request) => Limit::perMinute(60)->by($request->ip()));
     }
 }

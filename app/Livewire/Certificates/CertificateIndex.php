@@ -109,6 +109,13 @@ class CertificateIndex extends Component
             return;
         }
 
+        app(\App\Services\AuditLogger::class)->log(
+            'updated',
+            $certificate,
+            ['action' => 'regenerate_requested'],
+            ['file_path' => $certificate->file_path],
+        );
+
         GenerateCertificate::dispatch($certificate->id)->onQueue('certificates');
 
         session()->flash('success', 'PDF sertifikat sedang digenerate ulang.');
@@ -118,14 +125,14 @@ class CertificateIndex extends Component
     {
         $this->authorize('manage', Certificate::class);
 
-        if (! $certificate->file_path || ! Storage::disk('public')->exists($certificate->file_path)) {
+        if (! $certificate->file_path || ! Storage::disk('local')->exists($certificate->file_path)) {
             session()->flash('error', 'File PDF belum tersedia. Coba regenerate.');
 
             return;
         }
 
         return response()->download(
-            Storage::disk('public')->path($certificate->file_path),
+            Storage::disk('local')->path($certificate->file_path),
             'sertifikat-'.$certificate->code.'.pdf',
         );
     }

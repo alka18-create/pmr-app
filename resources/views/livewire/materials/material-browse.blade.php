@@ -44,7 +44,7 @@
                     @endif
                     <div class="mt-3">
                         @if ($item->file_path)
-                            <a href="{{ \Illuminate\Support\Facades\Storage::url($item->file_path) }}" target="_blank"
+                            <a href="{{ route('materials.download', $item) }}" target="_blank"
                                 class="inline-block rounded-xl bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-brand-700">Buka PDF</a>
                         @else
                             <span class="text-xs text-gray-400">File belum tersedia</span>

@@ -33,12 +33,12 @@ class MessageIndex extends Component
         }
     }
 
-    public function open(int $id): void
+    public function open(int $id, \App\Actions\Messages\SetMessageStatus $setStatus): void
     {
         $message = Message::findOrFail($id);
 
         if ($message->status === MessageStatus::Unread) {
-            $message->update(['status' => MessageStatus::Read]);
+            $setStatus->execute($message, MessageStatus::Read);
         }
 
         $this->openId = $id;
@@ -49,9 +49,10 @@ class MessageIndex extends Component
         $this->openId = null;
     }
 
-    public function markReplied(int $id): void
+    public function markReplied(int $id, \App\Actions\Messages\SetMessageStatus $setStatus): void
     {
-        Message::whereKey($id)->update(['status' => MessageStatus::Replied->value]);
+        $message = Message::findOrFail($id);
+        $setStatus->execute($message, MessageStatus::Replied);
         session()->flash('success', 'Pesan ditandai sudah dibalas.');
         $this->openId = null;
     }

@@ -28,14 +28,14 @@ Konteks: aplikasi menyimpan **data pribadi siswa di bawah umur**. Tingkat keharu
 ### 2.3 Input & Upload
 - Semua input via FormRequest dengan rules eksplisit.
 - Escape output Blade `{{ }}` (default). `{!! !!}` hanya untuk konten yang sudah di-sanitize (HTMLPurifier) — misal body artikel.
-- Upload file: validasi MIME/extension whitelist, ukuran maks (foto 2 MB, PDF 5 MB), rename random, simpan **di luar** `public/` bila berisi data sensitif (kecuali foto profil yang memang publik).
-- Eksekusi file upload mustahil: `storage` tidak bisa di-serve script.
+- Upload file: validasi MIME/extension whitelist, ukuran maks (foto 2 MB, PDF 5 MB), rename random, simpan **di luar** `public/` (menggunakan disk `local` / `storage/app/private/`) bila berisi data sensitif/internal seperti materi pelatihan PDF, sertifikat PDF, dan lampiran prestasi (kecuali foto profil, poster kegiatan, cover artikel, dan media galeri yang memang ditujukan untuk publik). File di disk private hanya dapat diakses melalui controller berotorisasi (`materials.download`, `achievements.download`, `CertificateIndex::download`, `MyCertificates::download`).
+- Eksekusi file upload mustahil: `storage` tidak bisa di-serve script. Cek: `tests/Feature/SensitiveUploadStorageTest.php`.
 
 ### 2.4 Web
 - CSRF protection aktif untuk semua form POST.
 - Content-Security-Policy + header keamanan lain via middleware global Laravel `App\Http\Middleware\SecurityHeaders` (env-aware: longgar di dev termasuk HMR Vite; di produksi hanya origin eksternal Google Fonts — `style-src fonts.googleapis.com`, `font-src fonts.gstatic.com` — untuk font Plus Jakarta Sans, docs/06) — diketatkan bertahap; file statis (tidak lewat PHP) dapat header dasar via nginx.
 - Headers: `X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy`.
-- HTTPS dipaksa di Cloudflare (Full Strict) + redirect di Nginx.
+- HTTPS dipaksa di Cloudflare (Full Strict) + redirect di Nginx (`docker/nginx/default.conf` via pengecekan `X-Forwarded-Proto = "http"`, menjaga localhost dev dan healthcheck tetap berfungsi).
 - Nonaktifkan `APP_DEBUG` di produksi.
 - Sembunyikan versi Laravel & header server yang tidak perlu.
 - Cek: `tests/Feature/SecurityHeadersTest.php`.
@@ -46,8 +46,9 @@ Konteks: aplikasi menyimpan **data pribadi siswa di bawah umur**. Tingkat keharu
 - Larangan `Model::create($request->all())`.
 
 ### 2.6 Rate Limiting
-- Login, form kontak, check-in QR, verifikasi sertifikat → rate limited.
-- Global throttle 60 request/menit/IP untuk route publik.
+- Login, form kontak, check-in QR, verifikasi sertifikat → rate limited (login 5 gagal/15 menit; kontak 60/menit; verifikasi 30/menit; check-in 30/menit/IP — lihat docs/07 §4.1).
+- Global throttle publik: limiter bernama `public` (60 request/menit/IP, `AppServiceProvider`) via `throttle:public` pada semua halaman publik. Dikecualikan: `/check-in/*` (limiter sendiri) dan `/health` (uptime monitor). Endpoint internal Livewire (`/livewire-*/update`) tidak tercakup — dijaga Cloudflare (docs/09 §4). Cek: `tests/Feature/PublicThrottleTest.php`.
+- **IP klien harus benar:** di balik Cloudflare, Nginx memakai `real_ip_header CF-Connecting-IP` hanya dari range IP Cloudflare (`docker/nginx/default.conf`). Tanpa ini semua pengunjung berbagi satu IP edge dan rate limit per IP (login, check-in, publik) menjadi tidak berarti. Perbarui daftar range berkala dari https://www.cloudflare.com/ips.
 
 ## 3. Keamanan Data Privasi
 

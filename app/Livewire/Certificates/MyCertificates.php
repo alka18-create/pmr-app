@@ -23,14 +23,14 @@ class MyCertificates extends Component
             return;
         }
 
-        if (! $certificate->file_path || ! Storage::disk('public')->exists($certificate->file_path)) {
+        if (! $certificate->file_path || ! Storage::disk('local')->exists($certificate->file_path)) {
             session()->flash('error', 'File PDF belum tersedia.');
 
             return;
         }
 
         return response()->download(
-            Storage::disk('public')->path($certificate->file_path),
+            Storage::disk('local')->path($certificate->file_path),
             'sertifikat-'.$certificate->code.'.pdf',
         );
     }

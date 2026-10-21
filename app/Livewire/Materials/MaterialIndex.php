@@ -9,6 +9,7 @@ use App\Enums\MaterialCategory;
 use App\Enums\MaterialLevel;
 use App\Models\Material;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Locked;
@@ -112,7 +113,10 @@ class MaterialIndex extends Component
         }
 
         if ($this->file) {
-            $path = $this->file->store('materials/'.$saved->id, 'public');
+            if ($saved->file_path) {
+                Storage::disk('local')->delete($saved->file_path);
+            }
+            $path = $this->file->store('materials/'.$saved->id, 'local');
             (new UpdateMaterial)->execute($saved, ['file_path' => $path]);
         }
 

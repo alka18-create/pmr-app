@@ -13,7 +13,7 @@ class RevokeCertificate
         $old = $certificate->getAttributes();
 
         if ($certificate->file_path) {
-            Storage::disk('public')->delete($certificate->file_path);
+            Storage::disk('local')->delete($certificate->file_path);
         }
 
         $certificate->update([

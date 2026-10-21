@@ -58,14 +58,12 @@ class ContactPage extends Component
 
         RateLimiter::hit($key, 60);
 
-        Message::create([
+        app(\App\Actions\Messages\SubmitContactMessage::class)->execute([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'subject' => $validated['subject'],
             'body' => $validated['body'],
-            'status' => MessageStatus::Unread,
-            'ip_address' => $ip,
-        ]);
+        ], $ip);
 
         session()->flash('success', 'Terima kasih! Pesan Anda telah kami terima.');
         $this->reset(['name', 'email', 'subject', 'body']);

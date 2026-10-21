@@ -12,6 +12,8 @@ class UpdateUser
     {
         $oldAll = Arr::except($user->getAttributes(), ['password', 'remember_token']);
 
+        $passwordChanged = ! empty($data['password'] ?? null);
+
         if (empty($data['password'] ?? null)) {
             unset($data['password']);
         }
@@ -25,6 +27,10 @@ class UpdateUser
             Arr::except($user->getAttributes(), ['password', 'remember_token']),
             $dirtyKeys,
         );
+
+        if ($passwordChanged) {
+            $new['password_changed'] = true;
+        }
 
         app(AuditLogger::class)->log('updated', $user, $old, $new);
 

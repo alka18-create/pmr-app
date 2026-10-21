@@ -31,7 +31,7 @@ class MemberExport extends Component
     {
         $this->authorize('export', Member::class);
 
-        $export->download(
+        return $export->download(
             $this->classFilter !== '' ? (int) $this->classFilter : null,
             $this->batchFilter !== '' ? (int) $this->batchFilter : null,
             $this->statusFilter !== '' ? $this->statusFilter : null,

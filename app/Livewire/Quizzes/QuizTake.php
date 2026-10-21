@@ -29,10 +29,13 @@ class QuizTake extends Component
 
     public ?int $secondsRemaining = null;
 
+    #[Locked]
     public bool $submitted = false;
 
+    #[Locked]
     public ?int $finalScore = null;
 
+    #[Locked]
     public ?bool $passed = null;
 
     public function mount(Quiz $quiz): void

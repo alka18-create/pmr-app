@@ -84,12 +84,8 @@ class EventCreate extends Component
             'created_by' => auth()->id(),
         ];
 
-        $event = $createEvent->execute($data);
-
-        if ($this->cover) {
-            $path = $this->cover->store('events/'.$event->id, 'public');
-            $event->update(['cover_path' => $path]);
-        }
+        $cover = $this->cover instanceof \Illuminate\Http\UploadedFile ? $this->cover : null;
+        $event = $createEvent->execute($data, $cover);
 
         session()->flash('success', 'Kegiatan berhasil dibuat.');
 

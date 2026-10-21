@@ -30,6 +30,7 @@
             @php
                 $navSaya = [
                     ['label' => 'Dasbor', 'route' => 'panel.home', 'is' => 'panel.home', 'icon' => 'home'],
+                    ['label' => 'Profil Saya', 'route' => 'panel.profile', 'is' => 'panel.profile*', 'icon' => 'user-circle'],
                     ['label' => 'Materi', 'route' => 'materials.index', 'is' => 'materials.index', 'icon' => 'book'],
                     ['label' => 'Quiz', 'route' => 'quizzes.index', 'is' => ['quizzes.index', 'quizzes.take'], 'icon' => 'academic'],
                     ['label' => 'Nilai', 'route' => 'results.index', 'is' => 'results.*', 'icon' => 'chart'],
@@ -179,7 +180,7 @@
                 </button>
                 <div class="ml-auto flex items-center gap-3 sm:gap-4">
                     <livewire:notifications.notifications-badge />
-                    <div class="flex items-center gap-2.5">
+                    <a href="{{ route('panel.profile') }}" class="flex items-center gap-2.5 rounded-xl p-1 transition hover:bg-gray-100" title="Buka Profil Saya">
                         <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-600 text-sm font-extrabold text-white" aria-hidden="true">
                             {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
                         </span>
@@ -187,7 +188,7 @@
                             <p class="max-w-40 truncate text-sm font-bold leading-tight text-gray-900">{{ auth()->user()->name }}</p>
                             <p class="text-[11px] font-medium uppercase tracking-widest text-gray-500">{{ auth()->user()->role->value }}</p>
                         </div>
-                    </div>
+                    </a>
                     <form method="POST" action="{{ route('logout') }}" class="hidden md:block">
                         @csrf
                         <button

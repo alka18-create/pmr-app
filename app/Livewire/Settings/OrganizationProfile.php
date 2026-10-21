@@ -9,6 +9,7 @@ use App\Services\OrganizationPrinciples;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\UploadedFile;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -37,6 +38,7 @@ class OrganizationProfile extends Component
 
     public string $tiktok = '';
 
+    #[Locked]
     public string $logoPath = '';
 
     /** @var array<int, array{title: string, body: string}> */

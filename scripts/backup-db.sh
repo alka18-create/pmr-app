@@ -22,7 +22,10 @@ ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT_DIR"
 BACKUP_DIR="${BACKUP_DIR:-$ROOT_DIR/backups}"
 STAMP="$(date +%Y%m%d-%H%M%S)"
+# Backup berisi data pribadi anggota: hanya pemilik yang boleh baca (file 600, folder 700).
+umask 077
 mkdir -p "$BACKUP_DIR"
+chmod 700 "$BACKUP_DIR" 2>/dev/null || true
 
 # File compose: pilih yang container postgres-nya benar-benar berjalan.
 COMPOSE_FILE="${PMR_COMPOSE_FILE:-}"

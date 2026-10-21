@@ -129,7 +129,7 @@ class GalleryIndex extends Component
         session()->flash('success', 'Item galeri dihapus.');
     }
 
-    public function saveCategory()
+    public function saveCategory(\App\Actions\Gallery\SaveGalleryCategory $saveCategory)
     {
         $this->authorize('manageCategory', GalleryItem::class);
 
@@ -140,7 +140,7 @@ class GalleryIndex extends Component
             'newCategoryName.required' => 'Nama kategori wajib diisi.',
         ]);
 
-        GalleryCategory::create([
+        $saveCategory->execute([
             'name' => $validated['newCategoryName'],
             'description' => $validated['newCategoryDescription'] ?? null,
         ]);
@@ -163,7 +163,7 @@ class GalleryIndex extends Component
         $this->reset(['editCategoryId', 'editCategoryName']);
     }
 
-    public function updateCategory(): void
+    public function updateCategory(\App\Actions\Gallery\SaveGalleryCategory $saveCategory): void
     {
         $this->authorize('manageCategory', GalleryItem::class);
 
@@ -173,18 +173,18 @@ class GalleryIndex extends Component
             'editCategoryName.required' => 'Nama kategori wajib diisi.',
         ]);
 
-        $category = GalleryCategory::findOrFail($this->editCategoryId);
-        $category->update(['name' => $this->editCategoryName]);
+        $saveCategory->execute(['name' => $this->editCategoryName], $this->editCategoryId);
 
         session()->flash('success', 'Kategori diperbarui.');
         $this->reset(['editCategoryId', 'editCategoryName']);
     }
 
-    public function deleteCategory(int $categoryId): void
+    public function deleteCategory(int $categoryId, \App\Actions\Gallery\DeleteGalleryCategory $deleteCategory): void
     {
         $this->authorize('manageCategory', GalleryItem::class);
 
-        GalleryCategory::where('id', $categoryId)->delete();
+        $category = GalleryCategory::findOrFail($categoryId);
+        $deleteCategory->execute($category);
 
         session()->flash('success', 'Kategori dihapus.');
     }

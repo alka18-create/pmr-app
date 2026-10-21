@@ -80,27 +80,18 @@ class EventShow extends Component
             return;
         }
 
-        $exists = EventParticipant::where('event_id', $event->id)
-            ->where('member_id', $member->id)
-            ->exists();
+        $participant = app(\App\Actions\Events\AddEventParticipant::class)->execute($event, $member);
 
-        if ($exists) {
+        if (! $participant) {
             session()->flash('error', 'Anggota sudah menjadi peserta.');
 
             return;
         }
 
-        EventParticipant::create([
-            'event_id' => $event->id,
-            'member_id' => $member->id,
-            'role_in_event' => 'peserta',
-            'invited_at' => now(),
-        ]);
-
         session()->flash('success', 'Peserta ditambahkan.');
     }
 
-    public function addParticipantsByClass()
+    public function addParticipantsByClass(\App\Actions\Events\AddEventParticipant $addParticipant)
     {
         $event = Event::findOrFail($this->eventId);
         $this->authorize('update', $event);
@@ -112,42 +103,20 @@ class EventShow extends Component
             return;
         }
 
-        $memberIds = Member::where('class_id', $classId)->pluck('id');
-        if ($memberIds->isEmpty()) {
-            session()->flash('error', 'Kelas tidak memiliki anggota.');
-
-            return;
-        }
-
-        $existing = EventParticipant::where('event_id', $event->id)
-            ->whereIn('member_id', $memberIds)
-            ->pluck('member_id');
-
-        $added = 0;
-        foreach ($memberIds->diff($existing) as $memberId) {
-            EventParticipant::create([
-                'event_id' => $event->id,
-                'member_id' => $memberId,
-                'role_in_event' => 'peserta',
-                'invited_at' => now(),
-            ]);
-            $added++;
-        }
+        $added = $addParticipant->bulkByClass($event, $classId);
 
         session()->flash(
             $added > 0 ? 'success' : 'error',
-            $added > 0 ? $added.' peserta ditambahkan.' : 'Semua anggota kelas sudah menjadi peserta.'
+            $added > 0 ? $added.' peserta ditambahkan.' : 'Semua anggota kelas sudah menjadi peserta atau kelas kosong.'
         );
     }
 
-    public function removeParticipant(int $participantId)
+    public function removeParticipant(int $participantId, \App\Actions\Events\RemoveEventParticipant $removeParticipant)
     {
         $event = Event::findOrFail($this->eventId);
         $this->authorize('update', $event);
 
-        EventParticipant::where('event_id', $event->id)
-            ->where('id', $participantId)
-            ->delete();
+        $removeParticipant->execute($event, $participantId);
 
         session()->flash('success', 'Peserta dihapus.');
     }
@@ -182,7 +151,7 @@ class EventShow extends Component
         $this->attendanceStatus = 'hadir';
     }
 
-    public function uploadDocument()
+    public function uploadDocument(\App\Actions\Events\UploadEventDocument $uploader)
     {
         $event = Event::findOrFail($this->eventId);
         $this->authorize('update', $event);
@@ -195,14 +164,7 @@ class EventShow extends Component
             'documentFile.max' => 'Ukuran file maksimal 5 MB.',
         ]);
 
-        $path = $this->documentFile->store('events/'.$event->id, 'public');
-        $extension = strtolower($this->documentFile->getClientOriginalExtension());
-        $type = in_array($extension, ['mp4', 'mov', 'avi'], true) ? 'video' : 'image';
-
-        EventDocument::create([
-            'event_id' => $event->id,
-            'file_path' => $path,
-            'file_type' => $type,
+        $uploader->execute($event, $this->documentFile, [
             'caption' => $this->documentCaption ?: null,
             'is_public' => $this->documentIsPublic,
             'uploaded_by' => auth()->id(),

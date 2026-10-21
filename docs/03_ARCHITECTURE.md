@@ -37,7 +37,7 @@ Prinsip: **satu codebase, satu deployable**. Tanpa API terpisah, tanpa CORS, tan
 | PostgreSQL | Relasi kuat, laporan & JSONB untuk fleksibilitas | MySQL (boleh, tapi PG dipilih) |
 | Redis | Cache + queue + session | Database-only (lambat) |
 | Docker Compose | Environment dev = prod, mudah dipindah | Install manual di host |
-| Spatie Permission | Standar role/permission Laravel | Custom manual |
+| Role Enum + Gate/Policy | 3 role tetap (`admin`, `pengurus`, `anggota`) via kolom `users.role` + Gate/Policy bawaan Laravel, minim kompleksitas tabel tambahan & zero-dependency; arsitektur tetap siap di-upgrade ke Spatie Permission bila kelak butuh permission granular | Spatie Permission (overhead terlalu tinggi untuk kebutuhan 3 role tetap 1 sekolah di V1) |
 
 ## 3. Struktur Folder Project
 

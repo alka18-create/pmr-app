@@ -6,6 +6,7 @@ use App\Actions\Masters\SaveSchoolClass;
 use App\Models\SchoolClass;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 
 #[Layout('components.layouts.panel')]
@@ -19,6 +20,7 @@ class ClassIndex extends Component
 
     public $year = 2026;
 
+    #[Locked]
     public ?int $editId = null;
 
     public function mount(): void
@@ -62,7 +64,7 @@ class ClassIndex extends Component
         return redirect()->route('admin.master.classes');
     }
 
-    public function delete(SchoolClass $schoolClass)
+    public function delete(SchoolClass $schoolClass, \App\Actions\Masters\DeleteSchoolClass $deleteSchoolClass)
     {
         $this->authorize('manage-master');
 
@@ -72,7 +74,7 @@ class ClassIndex extends Component
             return redirect()->route('admin.master.classes');
         }
 
-        $schoolClass->delete();
+        $deleteSchoolClass->execute($schoolClass);
 
         session()->flash('success', sprintf('Kelas %s dihapus.', $schoolClass->name));
 

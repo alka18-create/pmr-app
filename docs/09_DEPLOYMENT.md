@@ -57,6 +57,8 @@ FROM php:8.3-fpm
 - Serve `public/`, `try_files` ke `index.php`.
 - **Lokasi `^~ /livewire-` wajib ada** sebelum regex statis — endpoint Livewire (`/livewire-{hash}/livewire.js`, `/update`, dll.) adalah route PHP dinamis; tanpa `^~`, regex `\.js` menangkapnya → 404 & JS mati (bug login Livewire).
 - TLS dialihkan ke Cloudflare (origin cert atau Let's Encrypt).
+- **Redirect HTTPS:** `docker/nginx/default.conf` mengecek `$http_x_forwarded_proto = "http"` untuk mengembalikan 301 ke HTTPS secara otomatis bila diakses via HTTP di balik Cloudflare/reverse proxy, tanpa memutus akses lokal dev (port 8080) maupun healthcheck Docker (`127.0.0.1`).
+- **IP klien asli:** `real_ip_header CF-Connecting-IP` + `set_real_ip_from` untuk range Cloudflare sudah ada di `docker/nginx/default.conf`. Bila origin dipakai tanpa Cloudflare (mis. dev/staging langsung), header ini diabaikan karena koneksi bukan dari range tsb.
 - Header keamanan (lihat `08_SECURITY.md`).
 - Rate limit dasar di nginx (opsional, utama di Cloudflare).
 - Compress: gzip + brotli (Cloudflare sudah cache static).

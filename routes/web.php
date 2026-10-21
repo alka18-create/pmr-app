@@ -63,28 +63,50 @@ use App\Livewire\Website\MemberProfile;
 use App\Livewire\Website\OrganizationProfile as PublicOrganizationProfile;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', HomePage::class)->name('home');
+// Halaman publik: throttle global 60/menit/IP (docs/08 §2.6, limiter 'public' di AppServiceProvider).
+Route::middleware('throttle:public')->group(function () {
+    Route::get('/', HomePage::class)->name('home');
 
-Route::get('/profil', PublicOrganizationProfile::class)->name('public.profile');
-Route::get('/berita', ArticleDirectory::class)->name('public.articles.index');
-Route::get('/berita/{slug}', ArticleShow::class)->name('public.articles.show');
-Route::get('/galeri', GalleryDirectory::class)->name('public.gallery.index');
-Route::get('/galeri/{categorySlug}', GalleryDirectory::class)->name('public.gallery.category');
-Route::get('/prestasi', AchievementDirectory::class)->name('public.achievements.index');
-Route::get('/kontak', ContactPage::class)->name('public.contact')->middleware('throttle:60,1');
+    Route::get('/profil', PublicOrganizationProfile::class)->name('public.profile');
+    Route::get('/berita', ArticleDirectory::class)->name('public.articles.index');
+    Route::get('/berita/{slug}', ArticleShow::class)->name('public.articles.show');
+    Route::get('/galeri', GalleryDirectory::class)->name('public.gallery.index');
+    Route::get('/galeri/{categorySlug}', GalleryDirectory::class)->name('public.gallery.category');
+    Route::get('/prestasi', AchievementDirectory::class)->name('public.achievements.index');
+    Route::get('/kontak', ContactPage::class)->name('public.contact');
 
-Route::get('/anggota', MemberDirectory::class)->name('public.members.index');
-Route::get('/anggota/{slug}', MemberProfile::class)->name('public.members.show');
-Route::get('/kegiatan', EventDirectory::class)->name('public.events.index');
-Route::get('/kegiatan/{slug}', EventProfile::class)->name('public.events.show');
-Route::get('/check-in/{token}', CheckInController::class)->name('check-in')->middleware('throttle:10,1');
-Route::get('/verifikasi/{code?}', CertificateVerify::class)->name('verify.certificate')->middleware('throttle:30,1');
-Route::get('/sitemap.xml', SitemapController::class)->name('sitemap');
-Route::get('/robots.txt', RobotsController::class)->name('robots');
+    Route::get('/anggota', MemberDirectory::class)->name('public.members.index');
+    Route::get('/anggota/{slug}', MemberProfile::class)->name('public.members.show');
+    Route::get('/kegiatan', EventDirectory::class)->name('public.events.index');
+    Route::get('/kegiatan/{slug}', EventProfile::class)->name('public.events.show');
+    Route::get('/verifikasi/{code?}', CertificateVerify::class)->name('verify.certificate')->middleware('throttle:30,1');
+    Route::get('/sitemap.xml', SitemapController::class)->name('sitemap');
+    Route::get('/robots.txt', RobotsController::class)->name('robots');
+});
+
+// Check-in punya limiter sendiri (CheckInController); /health untuk uptime monitor — di luar throttle publik.
+Route::get('/check-in/{token}', [CheckInController::class, 'show'])->name('check-in');
+Route::post('/check-in/{token}', [CheckInController::class, 'store'])->name('check-in.store');
 Route::get('/health', HealthController::class)->name('health');
 
 Route::middleware('auth')->group(function () {
     Route::get('/panel', Dashboard::class)->name('panel.home');
+    Route::get('/panel/profil', \App\Livewire\Profile\ProfileIndex::class)->name('panel.profile');
+    Route::put('/panel/profil', function (\Illuminate\Http\Request $request, \App\Actions\Profile\UpdateProfile $updater) {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', \Illuminate\Validation\Rule::unique('users', 'email')->ignore(auth()->id())],
+            'address' => ['nullable', 'string', 'max:500'],
+            'phone' => ['nullable', 'string', 'max:20'],
+            'email_pribadi' => ['nullable', 'email', 'max:255'],
+            'parent_name' => ['nullable', 'string', 'max:255'],
+            'parent_phone' => ['nullable', 'string', 'max:20'],
+        ]);
+
+        $updater->execute(auth()->user(), $validated);
+
+        return back()->with('success', 'Profil Anda berhasil diperbarui.');
+    })->name('panel.profile.update');
 
     Route::middleware('role:admin|pengurus')->group(function () {
         Route::get('/panel/pengurus', PengurusArea::class)->name('panel.pengurus');
@@ -116,6 +138,7 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/panel/gallery', GalleryIndex::class)->name('gallery.index');
         Route::get('/panel/achievements', AchievementIndex::class)->name('achievements.index');
+        Route::get('/panel/achievements/{achievement}/download', \App\Http\Controllers\AchievementAttachmentController::class)->name('achievements.download');
         Route::get('/panel/messages', MessageIndex::class)->name('messages.index');
 
         Route::get('/panel/materi/manage', MaterialIndex::class)->name('materials.manage');
@@ -129,6 +152,7 @@ Route::middleware('auth')->group(function () {
 
     // Academy — semua role login (anggota+)
     Route::get('/panel/materi', MaterialBrowse::class)->name('materials.index');
+    Route::get('/panel/materi/{material}/download', \App\Http\Controllers\MaterialDownloadController::class)->name('materials.download');
     Route::get('/panel/quiz', QuizIndex::class)->name('quizzes.index');
     Route::get('/panel/quiz/{quiz}', QuizTake::class)->name('quizzes.take');
     Route::get('/panel/nilai', ResultShow::class)->name('results.index');

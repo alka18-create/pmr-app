@@ -247,7 +247,7 @@ class EventManagementTest extends TestCase
             'member_id' => $member->id,
         ]);
 
-        $response = $this->get(route('check-in', $participant->qr_token));
+        $response = $this->post(route('check-in.store', $participant->qr_token));
         $response->assertOk();
         $response->assertSee('Berhasil Check-in');
 
@@ -257,6 +257,24 @@ class EventManagementTest extends TestCase
             'status' => 'hadir',
             'method' => 'qr',
         ]);
+    }
+
+    public function test_qr_check_in_get_hanya_konfirmasi_tanpa_mencatat(): void
+    {
+        $event = Event::factory()->published()->create([
+            'starts_at' => now()->subHour(),
+            'ends_at' => now()->addHours(2),
+        ]);
+        $participant = EventParticipant::factory()->create([
+            'event_id' => $event->id,
+            'member_id' => Member::factory()->create()->id,
+        ]);
+
+        $this->get(route('check-in', $participant->qr_token))
+            ->assertOk()
+            ->assertSee('Konfirmasi Check-in');
+
+        $this->assertSame(0, AttendanceRecord::where('event_id', $event->id)->count());
     }
 
     public function test_qr_check_in_duplikat_ditolak(): void
@@ -271,9 +289,9 @@ class EventManagementTest extends TestCase
             'member_id' => $member->id,
         ]);
 
-        $this->get(route('check-in', $participant->qr_token))->assertOk();
+        $this->post(route('check-in.store', $participant->qr_token))->assertOk();
 
-        $this->get(route('check-in', $participant->qr_token))->assertStatus(409);
+        $this->post(route('check-in.store', $participant->qr_token))->assertStatus(409);
         $this->assertSame(1, AttendanceRecord::where('event_id', $event->id)->count());
     }
 
@@ -286,11 +304,11 @@ class EventManagementTest extends TestCase
     {
         $token = '11111111-1111-1111-1111-111111111111';
 
-        for ($i = 0; $i < 10; $i++) {
-            $this->get(route('check-in', $token))->assertNotFound();
+        for ($i = 0; $i < \App\Http\Controllers\CheckInController::MAX_ATTEMPTS_PER_MINUTE; $i++) {
+            $this->post(route('check-in.store', $token))->assertNotFound();
         }
 
-        $this->get(route('check-in', $token))->assertStatus(429);
+        $this->post(route('check-in.store', $token))->assertStatus(429);
     }
 
     public function test_halaman_publik_kegiatan_hanya_published_dan_public(): void

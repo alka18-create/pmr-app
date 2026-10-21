@@ -100,12 +100,8 @@ class EventEdit extends Component
             'max_participants' => $validated['max_participants'] ?? null,
         ];
 
-        $updateEvent->execute($event, $data);
-
-        if ($this->cover) {
-            $path = $this->cover->store('events/'.$event->id, 'public');
-            $event->update(['cover_path' => $path]);
-        }
+        $cover = $this->cover instanceof \Illuminate\Http\UploadedFile ? $this->cover : null;
+        $updateEvent->execute($event, $data, $cover);
 
         session()->flash('success', 'Kegiatan berhasil diperbarui.');
 

@@ -16,6 +16,10 @@ class DeleteMaterial
             [],
         );
 
+        if ($material->file_path) {
+            \Illuminate\Support\Facades\Storage::disk('local')->delete($material->file_path);
+        }
+
         $material->delete();
     }
 }

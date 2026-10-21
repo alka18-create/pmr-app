@@ -12,6 +12,7 @@ use App\Models\Position;
 use App\Models\SchoolClass;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 
 #[Layout('components.layouts.panel')]
@@ -19,6 +20,7 @@ class MemberEdit extends Component
 {
     use AuthorizesRequests;
 
+    #[Locked]
     public Member $member;
 
     public string $full_name = '';

@@ -194,5 +194,84 @@ class AuditLogTest extends TestCase
             $this->assertArrayNotHasKey('password', $log->old_values ?? []);
             $this->assertArrayNotHasKey('password', $log->new_values ?? []);
         }
+
+        $log = AuditLog::where('action', AuditAction::Updated->value)
+            ->where('model_id', $user->id)
+            ->firstOrFail();
+
+        $this->assertTrue($log->new_values['password_changed'] ?? false);
+    }
+
+    public function test_logout_menghasilkan_audit_log(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->post(route('logout'))
+            ->assertRedirect(route('login'));
+
+        $log = AuditLog::where('action', AuditAction::Logout->value)->first();
+        $this->assertNotNull($log);
+        $this->assertSame($user->id, $log->user_id);
+    }
+
+    public function test_master_data_crud_menghasilkan_audit_log(): void
+    {
+        $admin = $this->admin();
+
+        Livewire::actingAs($admin)
+            ->test(\App\Livewire\Masters\BatchIndex::class)
+            ->set('name', 'Angkatan Audit')
+            ->set('year', 2028)
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $batch = \App\Models\Batch::where('name', 'Angkatan Audit')->firstOrFail();
+
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'created',
+            'model_type' => \App\Models\Batch::class,
+            'model_id' => $batch->id,
+        ]);
+
+        Livewire::actingAs($admin)
+            ->test(\App\Livewire\Masters\BatchIndex::class)
+            ->call('delete', $batch->id);
+
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'deleted',
+            'model_type' => \App\Models\Batch::class,
+            'model_id' => $batch->id,
+        ]);
+    }
+
+    public function test_setting_crud_menghasilkan_audit_log(): void
+    {
+        $admin = $this->admin();
+
+        Livewire::actingAs($admin)
+            ->test(\App\Livewire\Settings\SettingIndex::class)
+            ->set('key', 'audit_setting_key')
+            ->set('value', 'nilai')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $setting = \App\Models\Setting::where('key', 'audit_setting_key')->firstOrFail();
+
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'created',
+            'model_type' => \App\Models\Setting::class,
+            'model_id' => $setting->id,
+        ]);
+
+        Livewire::actingAs($admin)
+            ->test(\App\Livewire\Settings\SettingIndex::class)
+            ->call('delete', $setting);
+
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'deleted',
+            'model_type' => \App\Models\Setting::class,
+            'model_id' => $setting->id,
+        ]);
     }
 }

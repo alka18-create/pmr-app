@@ -11,9 +11,14 @@ use Illuminate\Support\Arr;
 
 class CreateEvent
 {
-    public function execute(array $data): Event
+    public function execute(array $data, ?\Illuminate\Http\UploadedFile $cover = null): Event
     {
         $event = Event::create($data);
+
+        if ($cover) {
+            $path = $cover->store('events/'.$event->id, 'public');
+            $event->update(['cover_path' => $path]);
+        }
 
         app(AuditLogger::class)->log(
             'created',

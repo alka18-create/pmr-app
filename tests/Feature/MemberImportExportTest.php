@@ -225,7 +225,8 @@ class MemberImportExportTest extends TestCase
 
         Livewire::actingAs($pengurus)
             ->test(MemberExport::class)
-            ->call('download');
+            ->call('download')
+            ->assertFileDownloaded();
 
         Excel::assertDownloaded('anggota.xlsx');
 

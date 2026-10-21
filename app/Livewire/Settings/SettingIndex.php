@@ -8,6 +8,7 @@ use App\Http\Requests\SettingRequest;
 use App\Models\Setting;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 
 #[Layout('components.layouts.panel')]
@@ -21,6 +22,7 @@ class SettingIndex extends Component
 
     public string $value = '';
 
+    #[Locked]
     public ?int $editId = null;
 
     public function mount(): void
@@ -61,11 +63,11 @@ class SettingIndex extends Component
         return redirect()->route('admin.settings.index', ['group' => $this->activeGroup]);
     }
 
-    public function delete(Setting $setting)
+    public function delete(Setting $setting, \App\Actions\Settings\DeleteSetting $deleteSetting)
     {
         $this->authorize('manage', Setting::class);
 
-        $setting->delete();
+        $deleteSetting->execute($setting);
 
         session()->flash('success', sprintf('Pengaturan %s dihapus.', $setting->key));
 

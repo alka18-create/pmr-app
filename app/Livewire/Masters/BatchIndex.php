@@ -6,6 +6,7 @@ use App\Actions\Masters\SaveBatch;
 use App\Models\Batch;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 
 #[Layout('components.layouts.panel')]
@@ -17,6 +18,7 @@ class BatchIndex extends Component
 
     public $year = 2026;
 
+    #[Locked]
     public ?int $editId = null;
 
     public function mount(): void
@@ -58,7 +60,7 @@ class BatchIndex extends Component
         return redirect()->route('admin.master.batches');
     }
 
-    public function delete(Batch $batch)
+    public function delete(Batch $batch, \App\Actions\Masters\DeleteBatch $deleteBatch)
     {
         $this->authorize('manage-master');
 
@@ -68,7 +70,7 @@ class BatchIndex extends Component
             return redirect()->route('admin.master.batches');
         }
 
-        $batch->delete();
+        $deleteBatch->execute($batch);
 
         session()->flash('success', sprintf('Angkatan %s dihapus.', $batch->name));
 

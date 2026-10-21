@@ -108,7 +108,7 @@
                             <td class="py-3 pr-4 text-gray-600">{{ $item->order }}</td>
                             <td class="py-3 pr-4">
                                 @if ($item->file_path)
-                                    <a href="{{ \Illuminate\Support\Facades\Storage::url($item->file_path) }}" target="_blank" class="text-brand-700 underline">PDF</a>
+                                    <a href="{{ route('materials.download', $item) }}" target="_blank" class="text-brand-700 underline">PDF</a>
                                 @else
                                     <span class="text-gray-400">—</span>
                                 @endif

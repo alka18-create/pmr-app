@@ -10,12 +10,21 @@ class SavePosition
 {
     public function execute(array $data): Position
     {
-        $position = isset($data['id']) && $data['id']
-            ? Position::findOrFail($data['id'])
-            : new Position;
+        $isNew = ! (isset($data['id']) && $data['id']);
+        $position = $isNew
+            ? new Position
+            : Position::findOrFail($data['id']);
 
+        $old = $isNew ? [] : $position->getAttributes();
         $position->fill(Arr::except($data, ['id']));
         $position->save();
+
+        app(\App\Services\AuditLogger::class)->log(
+            $isNew ? 'created' : 'updated',
+            $position,
+            $old,
+            $position->getAttributes(),
+        );
 
         return $position;
     }

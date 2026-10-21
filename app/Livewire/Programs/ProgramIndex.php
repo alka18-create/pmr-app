@@ -2,11 +2,14 @@
 
 namespace App\Livewire\Programs;
 
+use App\Actions\Programs\DeleteProgram;
+use App\Actions\Programs\SaveProgram;
 use App\Enums\ProgramStatus;
 use App\Models\Program;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 
 #[Layout('components.layouts.panel')]
@@ -24,6 +27,7 @@ class ProgramIndex extends Component
 
     public string $status = 'rencana';
 
+    #[Locked]
     public ?int $editId = null;
 
     public function mount(): void
@@ -51,7 +55,7 @@ class ProgramIndex extends Component
         $this->year = (int) now()->year;
     }
 
-    public function save()
+    public function save(SaveProgram $saveProgram)
     {
         Gate::authorize('access-pengurus-area');
 
@@ -64,20 +68,20 @@ class ProgramIndex extends Component
         ]);
 
         if ($this->editId) {
-            Program::findOrFail($this->editId)->update($validated);
+            $saveProgram->execute($validated, Program::findOrFail($this->editId));
             session()->flash('success', 'Program diperbarui.');
         } else {
-            Program::create($validated + ['owner_id' => auth()->id()]);
+            $saveProgram->execute($validated, null, auth()->id());
             session()->flash('success', 'Program ditambahkan.');
         }
 
         return redirect()->route('programs.index');
     }
 
-    public function delete(int $id)
+    public function delete(int $id, DeleteProgram $deleteProgram)
     {
         Gate::authorize('access-pengurus-area');
-        Program::findOrFail($id)->delete();
+        $deleteProgram->execute(Program::findOrFail($id));
         session()->flash('success', 'Program dihapus.');
 
         return redirect()->route('programs.index');

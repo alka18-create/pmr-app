@@ -10,12 +10,21 @@ class SaveSchoolClass
 {
     public function execute(array $data): SchoolClass
     {
-        $class = isset($data['id']) && $data['id']
-            ? SchoolClass::findOrFail($data['id'])
-            : new SchoolClass;
+        $isNew = ! (isset($data['id']) && $data['id']);
+        $class = $isNew
+            ? new SchoolClass
+            : SchoolClass::findOrFail($data['id']);
 
+        $old = $isNew ? [] : $class->getAttributes();
         $class->fill(Arr::except($data, ['id']));
         $class->save();
+
+        app(\App\Services\AuditLogger::class)->log(
+            $isNew ? 'created' : 'updated',
+            $class,
+            $old,
+            $class->getAttributes(),
+        );
 
         return $class;
     }

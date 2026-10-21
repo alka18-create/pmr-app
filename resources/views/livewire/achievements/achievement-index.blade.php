@@ -108,6 +108,9 @@
                                 <x-badge :color="$item->is_public ? 'green' : 'gray'">{{ $item->is_public ? 'ya' : 'tidak' }}</x-badge>
                             </td>
                             <td class="whitespace-nowrap py-3 text-right">
+                                @if ($item->attachment_path)
+                                    <a href="{{ route('achievements.download', $item) }}" target="_blank" class="mr-3 text-sm text-brand-700 underline hover:text-brand-900">Lampiran</a>
+                                @endif
                                 <button type="button" wire:click="startEdit({{ $item->id }})" class="text-sm text-gray-700 underline hover:text-gray-900">Edit</button>
                                 <button type="button" wire:click="delete({{ $item->id }})" wire:confirm="Hapus prestasi ini?"
                                     class="ml-3 text-sm text-brand-600 underline hover:text-brand-800">Hapus</button>

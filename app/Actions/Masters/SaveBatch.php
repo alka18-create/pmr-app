@@ -10,12 +10,21 @@ class SaveBatch
 {
     public function execute(array $data): Batch
     {
-        $batch = isset($data['id']) && $data['id']
-            ? Batch::findOrFail($data['id'])
-            : new Batch;
+        $isNew = ! (isset($data['id']) && $data['id']);
+        $batch = $isNew
+            ? new Batch
+            : Batch::findOrFail($data['id']);
 
+        $old = $isNew ? [] : $batch->getAttributes();
         $batch->fill(Arr::except($data, ['id']));
         $batch->save();
+
+        app(\App\Services\AuditLogger::class)->log(
+            $isNew ? 'created' : 'updated',
+            $batch,
+            $old,
+            $batch->getAttributes(),
+        );
 
         return $batch;
     }

@@ -63,23 +63,23 @@ GET  /panel/sertifikat/manage terbit/cabut/regenerate sertifikat
 
 ## 2. Route Autentikasi
 ```
-GET  /login
-POST /login                   (rate limited)
-POST /logout
-GET  /lupa-password
-POST /lupa-password
-GET  /reset-password/{token}
-POST /reset-password
-GET  /panel                   (redirect per role)
+GET  /login                   ✅
+POST /login                   (rate limited) ✅
+POST /logout                  ✅
+GET  /lupa-password           ✅
+POST /lupa-password           (rate limited) ✅
+GET  /reset-password/{token}  ✅
+POST /reset-password          ✅
+GET  /panel                   (redirect per role) ✅
 ```
 
 ## 3. Route Panel (auth required)
 Semua prefix `/panel`, middleware `auth` + authorize per Policy / role middleware.
 
 ```
-GET  /panel
-GET  /panel/profil
-PUT  /panel/profil
+GET  /panel                   ✅
+GET  /panel/profil            ✅
+PUT  /panel/profil            ✅
 
 # auth + role:admin|pengurus (atau Gate access-pengurus-area)
 GET  /panel/members                               ✅
@@ -112,7 +112,7 @@ GET  /panel/sertifikat                            ✅ unduh milik sendiri
 # Livewire actions (bukan route HTTP terpisah)
 # - EventShow: addParticipant, addParticipantsByClass, removeParticipant,
 #   saveAttendance, uploadDocument, delete
-# - Check-in peserta: GET /check-in/{qr_token} (public)
+# - Check-in peserta: GET /check-in/{qr_token} (konfirmasi) + POST /check-in/{qr_token} (catat) — public
 
 # admin only (role:admin)
 GET  /panel/admin/users
@@ -147,12 +147,14 @@ Catatan deviasi dari rencana lama:
 
 ### 4.1 Check-in QR
 ```
-GET /check-in/{token}
+GET  /check-in/{token}   halaman konfirmasi (read-only, tidak mencatat apa pun)
+POST /check-in/{token}   mencatat kehadiran (CSRF)
 ```
-- Token = `event_participants.qr_token` (uuid).
-- Response: halaman konfirmasi "Berhasil check-in" / error (sudah check-in, token salah, kegiatan berakhir).
-- Rate limited 10/menit/IP.
-- Mencatat `attendance_records` (method=qr, checked_in_at=now).
+- Token = `event_participants.qr_token` (UUID v4 acak, 122 bit).
+- GET hanya menampilkan nama kegiatan + anggota dan tombol "Catat Kehadiran Saya", supaya prefetch / pratinjau tautan tidak mencatat absensi tanpa disengaja.
+- POST mengembalikan halaman "Berhasil check-in" / error (sudah check-in 409, token salah 404, kegiatan tidak aktif/berakhir 422).
+- Rate limited 30 percobaan/menit/IP (GET + POST dihitung; longgar karena satu kelas bisa berbagi IP Wi-Fi sekolah). Konstanta: `CheckInController::MAX_ATTEMPTS_PER_MINUTE`.
+- POST mencatat `attendance_records` (method=qr, checked_in_at=now).
 
 ### 4.2 Verifikasi Sertifikat
 ```
@@ -167,7 +169,7 @@ GET /verifikasi/{code?}
 GET /panel/members/export
 GET /panel/laporan/absensi        → Livewire action exportExcel (.xlsx) / exportPdf (.pdf)
 ```
-- Export anggota memakai `Excel::download()` (pola Fase 2); rekap absensi memakai Excel + dompdf.
+- Export anggota: Livewire action `MemberExport::download` → Action `ExportMembers` mengembalikan response `Excel::download()` (wajib di-`return` sampai ke komponen agar file terkirim). Rekap absensi: Excel via Livewire, PDF via `AttendanceReportPdfController` (`GET /panel/laporan/absensi/pdf`, dompdf).
 - Selalu dicatat ke `audit_log` action=`export` (resource: `members` / `attendance_recap`).
 
 ### 4.4 Health check (publik, Phase 7 ✅)

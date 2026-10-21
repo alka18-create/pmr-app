@@ -6,6 +6,7 @@ use App\Actions\Members\PurgeMemberPersonalData;
 use App\Models\Member;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 
 #[Layout('components.layouts.panel')]
@@ -13,11 +14,14 @@ class MemberShow extends Component
 {
     use AuthorizesRequests;
 
+    #[Locked]
     public Member $member;
 
+    #[Locked]
     public bool $showInternal = false;
 
     /** @var array<string, mixed>|null */
+    #[Locked]
     public ?array $publicData = null;
 
     public function mount(Member $member): void

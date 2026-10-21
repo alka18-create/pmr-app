@@ -54,7 +54,7 @@ class AuditLogger
         foreach ($values as $key => $value) {
             if (is_string($key) && (
                 in_array($key, self::SENSITIVE_KEYS, true)
-                || str_contains($key, 'password')
+                || ($key !== 'password_changed' && str_contains($key, 'password'))
             )) {
                 continue;
             }

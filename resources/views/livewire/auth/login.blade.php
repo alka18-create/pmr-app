@@ -40,10 +40,15 @@
                 @enderror
             </div>
 
-            <label class="flex cursor-pointer items-center gap-2 text-sm text-gray-600">
-                <input type="checkbox" wire:model="remember" class="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500">
-                Ingat saya
-            </label>
+            <div class="flex items-center justify-between">
+                <label class="flex cursor-pointer items-center gap-2 text-sm text-gray-600">
+                    <input type="checkbox" wire:model="remember" class="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500">
+                    Ingat saya
+                </label>
+                <a href="{{ route('password.request') }}" class="text-xs font-semibold text-brand-600 hover:text-brand-700">
+                    Lupa password?
+                </a>
+            </div>
 
             <x-btn class="w-full" wire:loading.attr="disabled" wire:target="login">
                 <span wire:loading.remove wire:target="login">Masuk</span>
