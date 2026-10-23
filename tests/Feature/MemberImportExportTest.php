@@ -298,4 +298,46 @@ class MemberImportExportTest extends TestCase
 
         Excel::assertDownloaded('template-import-anggota.xlsx');
     }
+
+    public function test_import_dua_anggota_nama_sama_berhasil_dengan_slug_berbeda(): void
+    {
+        [$batch, $class, $position] = $this->setupMasters();
+        $pengurus = $this->pengurus();
+
+        $headers = $this->templateHeaders();
+        $file = $this->makeXlsx($headers, [
+            [
+                'Dina Sari', 'NIS-DS-1', '0051230008', 'perempuan',
+                '2006-04-20', 'Bandung', null, null,
+                null, null, null, 'O',
+                $batch->name, $class->name, null, 'aktif',
+                '2024-07-15', null,
+            ],
+            [
+                'Dina Sari', 'NIS-DS-2', '0051230009', 'perempuan',
+                '2007-05-19', 'Sidoarjo', null, null,
+                null, null, null, 'AB',
+                $batch->name, $class->name, null, 'aktif',
+                '2024-07-15', null,
+            ],
+        ]);
+
+        $component = Livewire::actingAs($pengurus)
+            ->test(MemberImport::class)
+            ->set('file', $file)
+            ->call('validateFile');
+
+        $this->assertCount(2, $component->get('valid'));
+        $this->assertCount(0, $component->get('rowErrors'));
+
+        $component->call('confirmImport')->assertRedirect(route('members.index'));
+
+        $m1 = Member::where('nisn', '0051230008')->first();
+        $m2 = Member::where('nisn', '0051230009')->first();
+
+        $this->assertNotNull($m1);
+        $this->assertNotNull($m2);
+        $this->assertSame('dina-sari', $m1->slug);
+        $this->assertSame('dina-sari-2', $m2->slug);
+    }
 }

@@ -58,14 +58,14 @@ class Member extends Model
         });
     }
 
-    public static function generateUniqueSlug(string $fullName, ?int $ignoreId = null): string
+    public static function generateUniqueSlug(string $fullName, ?int $ignoreId = null, array $extraUsed = []): string
     {
         $base = Str::slug($fullName);
         $slug = $base !== '' ? $base : 'anggota';
         $candidate = $slug;
         $i = 2;
 
-        while (static::where('slug', $candidate)
+        while (in_array($candidate, $extraUsed, true) || static::where('slug', $candidate)
             ->when($ignoreId, fn ($q) => $q->where('id', '!=', $ignoreId))
             ->exists()) {
             $candidate = $slug.'-'.$i;

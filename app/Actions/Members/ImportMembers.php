@@ -10,6 +10,7 @@ use App\Models\Position;
 use App\Models\SchoolClass;
 use App\Services\AuditLogger;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -30,6 +31,8 @@ class ImportMembers
         $rows = $this->readRows($file);
         $valid = [];
         $errors = [];
+        $seenNis = [];
+        $seenNisn = [];
 
         if ($rows === []) {
             $errors[] = [
@@ -45,10 +48,27 @@ class ImportMembers
             $payload = $this->normalize($row);
             $validator = Validator::make($payload, $this->rules(), $this->messages(), $this->attributes());
 
-            if ($validator->fails()) {
+            $inBatchErrors = [];
+            if (! empty($payload['nis'])) {
+                if (in_array($payload['nis'], $seenNis, true)) {
+                    $inBatchErrors[] = 'NIS "'.$payload['nis'].'" duplikat pada baris sebelumnya di file import ini.';
+                } else {
+                    $seenNis[] = $payload['nis'];
+                }
+            }
+            if (! empty($payload['nisn'])) {
+                if (in_array($payload['nisn'], $seenNisn, true)) {
+                    $inBatchErrors[] = 'NISN "'.$payload['nisn'].'" duplikat pada baris sebelumnya di file import ini.';
+                } else {
+                    $seenNisn[] = $payload['nisn'];
+                }
+            }
+
+            if ($validator->fails() || $inBatchErrors !== []) {
+                $errorMessages = array_merge($validator->errors()->all(), $inBatchErrors);
                 $errors[] = [
                     'row' => $rowNumber,
-                    'message' => collect($validator->errors()->all())->implode(' '),
+                    'message' => collect($errorMessages)->implode(' '),
                 ];
 
                 continue;
@@ -69,33 +89,39 @@ class ImportMembers
      */
     public function execute(array $rows): array
     {
-        $created = 0;
-        $updated = 0;
-        $prepared = [];
+        return DB::transaction(function () use ($rows) {
+            $created = 0;
+            $updated = 0;
+            $prepared = [];
+            $usedSlugs = [];
 
-        foreach ($rows as $payload) {
-            unset($payload['row']);
+            foreach ($rows as $payload) {
+                unset($payload['row']);
 
-            $payload = $this->resolveLookups($payload);
-            $payload = $this->castPayload($payload);
-            $this->assertLookupsExist($payload);
+                $payload = $this->resolveLookups($payload);
+                $payload = $this->castPayload($payload);
+                $this->assertLookupsExist($payload);
 
-            $payload['slug'] = Member::generateUniqueSlug($payload['full_name']);
-            $prepared[] = $payload;
-        }
+                $slug = Member::generateUniqueSlug($payload['full_name'], null, $usedSlugs);
+                $usedSlugs[] = $slug;
+                $payload['slug'] = $slug;
 
-        foreach ($prepared as $payload) {
-            Member::create($payload);
-            $created++;
-        }
+                $prepared[] = $payload;
+            }
 
-        app(AuditLogger::class)->log('import', null, [], [
-            'created' => $created,
-            'updated' => $updated,
-            'total' => $created + $updated,
-        ]);
+            foreach ($prepared as $payload) {
+                Member::create($payload);
+                $created++;
+            }
 
-        return ['created' => $created, 'updated' => $updated];
+            app(AuditLogger::class)->log('import', null, [], [
+                'created' => $created,
+                'updated' => $updated,
+                'total' => $created + $updated,
+            ]);
+
+            return ['created' => $created, 'updated' => $updated];
+        });
     }
 
     /**
