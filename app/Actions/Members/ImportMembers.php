@@ -43,7 +43,7 @@ class ImportMembers
         foreach ($rows as $index => $row) {
             $rowNumber = $index + 1;
             $payload = $this->normalize($row);
-            $validator = Validator::make($payload, $this->rules(), $this->attributes());
+            $validator = Validator::make($payload, $this->rules(), $this->messages(), $this->attributes());
 
             if ($validator->fails()) {
                 $errors[] = [
@@ -238,7 +238,74 @@ class ImportMembers
             }
         }
 
+        // Normalisasi jenis kelamin (toleran terhadap Laki, Laki-laki, L, Perempuan, P, dsb.)
+        if (isset($payload['gender']) && is_string($payload['gender'])) {
+            $g = Str::of($payload['gender'])->trim()->lower()->toString();
+            if (in_array($g, ['laki', 'laki-laki', 'l', 'pria', 'male', 'm'])) {
+                $payload['gender'] = 'laki';
+            } elseif (in_array($g, ['perempuan', 'p', 'wanita', 'female', 'f'])) {
+                $payload['gender'] = 'perempuan';
+            }
+        }
+
+        // Normalisasi status anggota (default ke 'aktif' bila tidak diisi)
+        if (! isset($payload['status']) || $payload['status'] === null || $payload['status'] === '') {
+            $payload['status'] = 'aktif';
+        } elseif (is_string($payload['status'])) {
+            $s = Str::of($payload['status'])->trim()->lower()->toString();
+            if (in_array($s, ['aktif', 'active'])) {
+                $payload['status'] = 'aktif';
+            } elseif (in_array($s, ['alumni'])) {
+                $payload['status'] = 'alumni';
+            } elseif (in_array($s, ['nonaktif', 'non-aktif', 'tidak aktif', 'inactive'])) {
+                $payload['status'] = 'nonaktif';
+            }
+        }
+
+        // Normalisasi golongan darah
+        if (isset($payload['blood_type']) && is_string($payload['blood_type'])) {
+            $bt = Str::of($payload['blood_type'])->trim()->upper()->toString();
+            $payload['blood_type'] = in_array($bt, ['A', 'B', 'AB', 'O']) ? $bt : null;
+        }
+
+        // Normalisasi format tanggal umum (DD/MM/YYYY atau DD-MM-YYYY -> YYYY-MM-DD)
+        foreach (['birth_date', 'joined_at'] as $dateKey) {
+            if (isset($payload[$dateKey]) && is_string($payload[$dateKey]) && $payload[$dateKey] !== '') {
+                $dateStr = trim($payload[$dateKey]);
+                if (preg_match('/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/', $dateStr, $matches)) {
+                    $payload[$dateKey] = sprintf('%04d-%02d-%02d', (int) $matches[3], (int) $matches[2], (int) $matches[1]);
+                }
+            }
+        }
+
+        // Default tanggal bergabung ke hari ini bila tidak diisi di template
+        if (! isset($payload['joined_at']) || $payload['joined_at'] === null || $payload['joined_at'] === '') {
+            $payload['joined_at'] = now()->toDateString();
+        }
+
         return $payload;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function messages(): array
+    {
+        return [
+            'full_name.required' => 'Nama Lengkap wajib diisi.',
+            'gender.required' => 'Jenis kelamin wajib diisi.',
+            'gender.enum' => 'Jenis kelamin tidak valid. Gunakan "laki" (atau Laki-laki / L) atau "perempuan" (atau P).',
+            'status.required' => 'Status wajib diisi.',
+            'status.enum' => 'Status tidak valid. Gunakan "aktif", "alumni", atau "nonaktif".',
+            'angkatan.required' => 'Angkatan wajib diisi (sesuai nama di menu Master Data).',
+            'kelas.required' => 'Kelas wajib diisi (sesuai nama di menu Master Data).',
+            'joined_at.required' => 'Tanggal bergabung wajib diisi.',
+            'joined_at.date' => 'Format tanggal bergabung tidak valid (contoh: YYYY-MM-DD atau DD/MM/YYYY).',
+            'birth_date.date' => 'Format tanggal lahir tidak valid (contoh: YYYY-MM-DD atau DD/MM/YYYY).',
+            'birth_date.before' => 'Tanggal lahir harus sebelum hari ini.',
+            'nis.unique' => 'NIS sudah digunakan anggota lain.',
+            'nisn.unique' => 'NISN sudah digunakan anggota lain.',
+        ];
     }
 
     /**

@@ -14,6 +14,32 @@
         </div>
     </div>
 
+    <div class="rounded-2xl border border-blue-100 bg-blue-50/60 p-4 text-xs text-blue-900 sm:p-5">
+        <h2 class="mb-2 text-sm font-bold text-blue-950">📋 Panduan Format Template Excel:</h2>
+        <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+            <div class="rounded-xl bg-white p-3 shadow-xs">
+                <span class="font-bold text-gray-800">Jenis Kelamin:</span>
+                <p class="mt-0.5 text-gray-600"><code class="rounded bg-gray-100 px-1 py-0.5 text-brand-700">laki</code> atau <code class="rounded bg-gray-100 px-1 py-0.5 text-brand-700">perempuan</code></p>
+                <p class="text-[10px] text-gray-400">Toleran: Laki-laki, L, P, Perempuan</p>
+            </div>
+            <div class="rounded-xl bg-white p-3 shadow-xs">
+                <span class="font-bold text-gray-800">Status Anggota:</span>
+                <p class="mt-0.5 text-gray-600"><code class="rounded bg-gray-100 px-1 py-0.5 text-brand-700">aktif</code>, <code class="rounded bg-gray-100 px-1 py-0.5 text-brand-700">alumni</code>, <code class="rounded bg-gray-100 px-1 py-0.5 text-brand-700">nonaktif</code></p>
+                <p class="text-[10px] text-gray-400">Otomatis 'aktif' jika dikosongkan</p>
+            </div>
+            <div class="rounded-xl bg-white p-3 shadow-xs">
+                <span class="font-bold text-gray-800">Angkatan & Kelas:</span>
+                <p class="mt-0.5 text-gray-600">Harus sama persis dengan yang ada di menu <span class="font-semibold text-gray-800">Master Data</span></p>
+                <p class="text-[10px] text-gray-400">Contoh: "Angkatan 2026", "X-A"</p>
+            </div>
+            <div class="rounded-xl bg-white p-3 shadow-xs">
+                <span class="font-bold text-gray-800">Format Tanggal:</span>
+                <p class="mt-0.5 text-gray-600"><code class="rounded bg-gray-100 px-1 py-0.5 text-brand-700">YYYY-MM-DD</code> atau <code class="rounded bg-gray-100 px-1 py-0.5 text-brand-700">DD/MM/YYYY</code></p>
+                <p class="text-[10px] text-gray-400">Contoh: 2008-05-15 atau 15/05/2008</p>
+            </div>
+        </div>
+    </div>
+
     <x-card>
         <form wire:submit="validateFile" class="space-y-4">
             <div>

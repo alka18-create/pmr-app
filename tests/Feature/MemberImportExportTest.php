@@ -239,6 +239,54 @@ class MemberImportExportTest extends TestCase
         $this->assertSame('members', $log->new_values['resource'] ?? null);
     }
 
+    public function test_import_mendukung_format_gender_dan_status_fleksibel(): void
+    {
+        [$batch, $class, $position] = $this->setupMasters();
+        $pengurus = $this->pengurus();
+
+        $headers = $this->templateHeaders();
+        $file = $this->makeXlsx($headers, [
+            [
+                'Siti Fleksibel', 'NIS-FLX-1', 'NISN-FLX-1', 'Laki-laki',
+                '15/05/2008', 'Jakarta', null, null,
+                null, null, null, 'b',
+                $batch->name, $class->name, null, 'Aktif',
+                '10/01/2026', null,
+            ],
+            [
+                'Rina Fleksibel', 'NIS-FLX-2', 'NISN-FLX-2', 'P',
+                '2008-06-20', 'Bandung', null, null,
+                null, null, null, null,
+                $batch->name, $class->name, null, '',
+                '', null,
+            ],
+        ]);
+
+        $component = Livewire::actingAs($pengurus)
+            ->test(MemberImport::class)
+            ->set('file', $file)
+            ->call('validateFile');
+
+        $this->assertCount(2, $component->get('valid'));
+        $this->assertCount(0, $component->get('rowErrors'));
+
+        $component->call('confirmImport')->assertRedirect(route('members.index'));
+
+        $this->assertDatabaseHas('members', [
+            'full_name' => 'Siti Fleksibel',
+            'gender' => 'laki',
+            'status' => 'aktif',
+            'blood_type' => 'B',
+            'birth_date' => '2008-05-15 00:00:00',
+        ]);
+
+        $this->assertDatabaseHas('members', [
+            'full_name' => 'Rina Fleksibel',
+            'gender' => 'perempuan',
+            'status' => 'aktif',
+        ]);
+    }
+
     public function test_download_template_dapat_direquest(): void
     {
         $pengurus = $this->pengurus();
